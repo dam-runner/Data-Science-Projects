@@ -14811,17 +14811,17 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="Project:-Amazon-Product-Recommendation-System"><strong>Project: Amazon Product Recommendation System</strong><a class="anchor-link" href="file:///C:/Users/damru/Downloads/Recommendation_System_Project_(Final).html#Project:-Amazon-Product-Recommendation-System">¶</a></h1><h1 id="Marks:-40"><strong>Marks: 40</strong><a class="anchor-link" href="file:///C:/Users/damru/Downloads/Recommendation_System_Project_(Final).html#Marks:-40">¶</a></h1><p>Welcome to the project on Recommendation Systems. We will work with the Amazon product reviews dataset for this project. The dataset contains ratings of different electronic products. It does not include information about the products or reviews to avoid bias while building the model.</p>
+<h1 id="Project:-Amazon-Product-Recommendation-System"><strong>Project: Amazon Product Recommendation System</strong><a class="anchor-link" href="Recommendation_System_Project_(Final).html#Project:-Amazon-Product-Recommendation-System">¶</a></h1><h1 id="Marks:-40"><strong>Marks: 40</strong><a class="anchor-link" href="file:///C:/Users/damru/Downloads/Recommendation_System_Project_(Final).html#Marks:-40">¶</a></h1><p>Welcome to the project on Recommendation Systems. We will work with the Amazon product reviews dataset for this project. The dataset contains ratings of different electronic products. It does not include information about the products or reviews to avoid bias while building the model.</p>
 <hr>
-<h2 id="Context:"><strong>Context:</strong><a class="anchor-link" href="file:///C:/Users/damru/Downloads/Recommendation_System_Project_(Final).html#Context:">¶</a></h2><hr>
+<h2 id="Context:"><strong>Context:</strong><a class="anchor-link" href="Recommendation_System_Project_(Final).html#Context:">¶</a></h2><hr>
 <p>Today, information is growing exponentially with volume, velocity and variety throughout the globe. This has lead to information overload, and too many choices for the consumer of any business. It represents a real dilemma for these consumers and they often turn to denial. Recommender Systems are one of the best tools that help recommending products to consumers while they are browsing online. Providing personalized recommendations which is most relevant for the user is what's most likely to keep them engaged and help business.</p>
 <p>E-commerce websites like Amazon, Walmart, Target and Etsy use different recommendation models to provide personalized suggestions to different users. These companies spend millions of dollars to come up with algorithmic techniques that can provide personalized recommendations to their users.</p>
 <p>Amazon, for example, is well-known for its accurate selection of recommendations in its online site. Amazon's recommendation system is capable of intelligently analyzing and predicting customers' shopping preferences in order to offer them a list of recommended products. Amazon's recommendation algorithm is therefore a key element in using AI to improve the personalization of its website. For example, one of the baseline recommendation models that Amazon uses is item-to-item collaborative filtering, which scales to massive data sets and produces high-quality recommendations in real-time.</p>
 <hr>
-<h2 id="Objective:"><strong>Objective:</strong><a class="anchor-link" href="file:///C:/Users/damru/Downloads/Recommendation_System_Project_(Final).html#Objective:">¶</a></h2><hr>
+<h2 id="Objective:"><strong>Objective:</strong><a class="anchor-link" href="Recommendation_System_Project_(Final).html#Objective:">¶</a></h2><hr>
 <p>You are a Data Science Manager at Amazon, and have been given the task of building a recommendation system to recommend products to customers based on their previous ratings for other products. You have a collection of labeled data of Amazon reviews of products. The goal is to extract meaningful insights from the data and build a recommendation system that helps in recommending products to online consumers.</p>
 <hr>
-<h2 id="Dataset:"><strong>Dataset:</strong><a class="anchor-link" href="file:///C:/Users/damru/Downloads/Recommendation_System_Project_(Final).html#Dataset:">¶</a></h2><hr>
+<h2 id="Dataset:"><strong>Dataset:</strong><a class="anchor-link" href="Recommendation_System_Project_(Final).html#Dataset:">¶</a></h2><hr>
 <p>The Amazon dataset contains the following attributes:</p>
 <ul>
 <li><strong>userId:</strong> Every user identified with a unique id</li>
@@ -15016,7 +15016,7 @@ Requirement already satisfied: scipy&gt;=1.3.2 in /usr/local/lib/python3.10/dist
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Loading-the-data"><strong>Loading the data</strong><a class="anchor-link" href="file:///C:/Users/damru/Downloads/Recommendation_System_Project_(Final).html#Loading-the-data">¶</a></h3><ul>
+<h3 id="Loading-the-data"><strong>Loading the data</strong><a class="anchor-link" href="Recommendation_System_Project_(Final).html#Loading-the-data">¶</a></h3><ul>
 <li>Import the Dataset</li>
 <li>Add column names ['user_id', 'prod_id', 'rating', 'timestamp']</li>
 <li>Drop the column timestamp</li>
@@ -15034,7 +15034,7 @@ Requirement already satisfied: scipy&gt;=1.3.2 in /usr/local/lib/python3.10/dist
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">path</span> <span class="o">=</span> <span class="s2">"/content/drive/MyDrive/DSML MIT Course/Recommendation Systems/Final Project/ratings_Electronics.csv"</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">path</span> <span class="o">=</span> <span class="s2">"ratings_Electronics.csv"</span>
 
 <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">'user_id'</span><span class="p">,</span> <span class="s1">'prod_id'</span><span class="p">,</span> <span class="s1">'rating'</span><span class="p">,</span> <span class="s1">'timestamp'</span><span class="p">])</span>
 <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">'timestamp'</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>   <span class="c1"># I'm not using 'timestamp' for this analysis</span>
@@ -15182,7 +15182,7 @@ Name: prod_id, dtype: int64
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="sd">'''</span>
 <span class="sd"># Specify the file path for the dataset</span>
-<span class="sd">dataset_file_path = '/content/drive/MyDrive/DSML MIT Course/Recommendation Systems/Final Project/Models and Datasets/df_final.pkl'</span>
+<span class="sd">dataset_file_path = 'df_final.pkl'</span>
 
 <span class="sd"># Save the dataset to disk using pickle</span>
 <span class="sd">df_final.to_pickle(dataset_file_path)</span>
@@ -19179,7 +19179,7 @@ Number of unique products: 58550
 <span class="sd"># Saving the dataset for future use</span>
 
 <span class="sd"># Specify the file path for the dataset</span>
-<span class="sd">dataset_file_path = '/content/drive/MyDrive/DSML MIT Course/Recommendation Systems/Final Project/Models and Datasets/df_item_based.pkl'</span>
+<span class="sd">dataset_file_path = 'df_item_based.pkl'</span>
 
 <span class="sd"># Save the dataset to disk using pickle</span>
 <span class="sd">df_item_based.to_pickle(dataset_file_path)</span>
@@ -19207,7 +19207,7 @@ Number of unique products: 58550
 
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
-<pre>"\n# Saving the dataset for future use\n\n# Specify the file path for the dataset\ndataset_file_path = '/content/drive/MyDrive/DSML MIT Course/Recommendation Systems/Final Project/Models and Datasets/df_item_based.pkl'\n\n# Save the dataset to disk using pickle\ndf_item_based.to_pickle(dataset_file_path)\n"</pre>
+<pre>"\n# Saving the dataset for future use\n\n# Specify the file path for the dataset\ndataset_file_path = 'df_item_based.pkl'\n\n# Save the dataset to disk using pickle\ndf_item_based.to_pickle(dataset_file_path)\n"</pre>
 </div>
 
 </div>
