@@ -1,0 +1,7 @@
+title: My Data Science Portfolio
+description: A collection of my data science projects.
+baseurl: "/Data-Science-Projects"  # Adjust if your site is hosted in a subpath
+url: "https://yourusername.github.io"
+theme: jekyll-theme-minimal
+github_username: yourusername
+show_downloads: true
