@@ -51,6 +51,7 @@ warnings.filterwarnings('ignore')
 !pip install scikit-surprise
 
 Download the dataset `ratings_Electronics.csv` and place it in the root directory of the project.
+```
 
 ### Execution Steps
 1. Clone the repository to your local machine.
