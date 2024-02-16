@@ -2,7 +2,7 @@
 
 
 ### Introduction
-This project is part of the MIT Data Science and Machine Learning course, focusing on developing a recommendation system for Amazon's electronic products. It utilizes various machine learning models to recommend products to customers based on their previous ratings.
+This project is part of the MIT Data Science and Machine Learning course, focusing on developing a recommendation system for Amazon's electronic products. It utilizes various machine learning models to recommend products to customers based on their previous ratings.  The datasets are proprietary to Great Learning, and thus are not included here.
 
 ### Context
 In the era of information overload, Recommender Systems play a crucial role in filtering through vast choices and providing personalized recommendations. Companies like Amazon invest heavily in algorithmic techniques to enhance customer experience through personalized suggestions.
@@ -54,6 +54,10 @@ Download the dataset `ratings_Electronics.csv` and place it in the root director
 ```
 
 ### Execution Steps
+**Note: The dataset is propriety and not included here, so this project cannot be executed fully and is view-only**
+
+These are the steps one would take if you had access to the dataset.
+
 1. Clone the repository to your local machine.
 2. Install all required libraries mentioned in the 'Installation and Setup' section.
 3. Place the `ratings_Electronics.csv` file in the project root directory.
