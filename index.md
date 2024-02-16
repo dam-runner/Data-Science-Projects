@@ -10,7 +10,7 @@ Welcome to my portfolio of data science projects. This collection showcases a ra
 - **Tools Used**: Python, NumPy, Pandas, Matplotlib, Seaborn, Scikit-Learn, TensorFlow, XGBoost, tqdm, GridSearchCV, Google Colab
 - **Models Used**: Logistic Regression, Decision Tree, Random Forest, XGBoost, Neural Network, SVM (Support Vector Machine), and Ensemble Models.
 - [Link to HTML](Hackathon Satisfaction Prediction/MIT DSML Hackathon.html) 
-- [View README](Hackathon Satisfaction Prediction/README.ml) 
+- [View README](Hackathon Satisfaction Prediction) 
 
 ### [Amazon Product Recommendation System](https://github.com/dam-runner/Data-Science-Projects/tree/main/Amazon%20Product%20Recommendations)
 - **Objective**: Build a recommendation system for Amazon's electronic products.
@@ -39,7 +39,7 @@ I'm David McArtor, a multidisciplinary professional dedicated to applying a wide
 
 ## Get in Touch
 
-- **LinkedIn**: [www.linkedin.com/in/david-mcartor-496724106](https://www.linkedin.com/in/david-mcartor-496724106/)
+- **LinkedIn**: [David McArtor](https://www.linkedin.com/in/david-mcartor-496724106/)
 - **Email**: [damrunner@gmail.com](mailto:damrunner@gmail.com)
 - **GitHub**: [dam-runner](https://github.com/dam-runner)
 
