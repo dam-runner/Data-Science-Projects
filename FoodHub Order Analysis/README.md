@@ -1,7 +1,7 @@
 # FoodHub Data Analysis
 
 ## Overview
-This project, my first through the Data Science and Machine Learning course with MIT, focuses on the fundamentals of data science. The primary objective is to analyze FoodHub, an online food delivery service, to enhance customer experience and improve business operations. The project emphasizes data cleaning and pre-processing, exploratory data analysis (EDA), univariate and multivariate analysis techniques, and data visualization.
+This project, my first through the Data Science and Machine Learning course with MIT, focuses on the fundamentals of data science. The primary objective is to analyze FoodHub, an online food delivery service, to enhance customer experience and improve business operations. The project emphasizes data cleaning and pre-processing, exploratory data analysis (EDA), univariate and multivariate analysis techniques, and data visualization.  The dataset is proprietary to Great Learning, so is not included here.
 
 ## Data Description
 The dataset contains information related to food orders placed through the FoodHub app. Key attributes include order ID, customer ID, restaurant name, cuisine type, order cost, day of the week, rating, food preparation time, and delivery time.
@@ -19,6 +19,10 @@ The analysis provided insights into customer behavior, order trends, and deliver
 - The mean delivery time is notably higher on weekdays.
 
 ## Instructions for Running the Project
+**Note: The dataset is propriety and not included here, so this project cannot be executed fully and is view-only**
+
+These are the steps one would take if you had access to the dataset.
+
 This project is primarily exploratory and analytical. It involves running Python scripts for data processing and visualization. To review the analysis:
 1. Ensure Python and necessary libraries (Pandas, Matplotlib, Seaborn) are installed.
 2. Run the Jupyter Notebook to view the analysis and visualizations.
