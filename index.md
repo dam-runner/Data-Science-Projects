@@ -1,37 +1,37 @@
-# Data Science Projects Portfolio
+# David McArtor's Data Science Projects Portfolio
 
 Welcome to my portfolio of data science projects. This collection showcases a range of skills and techniques in data analysis, machine learning, and data visualization, reflecting work completed as part of the MIT Data Science and Machine Learning course. Each project is detailed in its respective folder with its own README.
 
 ## Projects Overview
 
-### [Shinkansen Travel Experience Hackathon Project](/Hackathon%20Satisfaction%20Prediction)
+### [Shinkansen Travel Experience Hackathon Project](https://github.com/dam-runner/Data-Science-Projects/tree/main/Hackathon-Satisfaction-Prediction)
 - **Objective**: Predict passenger satisfaction for the Shinkansen Bullet Train to enhance travel experience.
 - **Skills and Techniques**: Applied a variety of machine learning models for binary classification and used ensemble methods to improve prediction accuracy.
-- **Tools Used**: Python, NumPy, Pandas, Matplotlib, Seaborn, Scikit-Learn, TensorFlow, XGBoost, tqdm.
+- **Tools Used**: Python, NumPy, Pandas, Matplotlib, Seaborn, Scikit-Learn, TensorFlow, XGBoost, tqdm, GridSearchCV, Google Colab
 - **Models Used**: Logistic Regression, Decision Tree, Random Forest, XGBoost, Neural Network, SVM (Support Vector Machine), and Ensemble Models.
-- [Link to .ipynb](Hackathon Satisfaction Prediction/Hackathon.ipynb) 
-- [Link to Repository](Hackathon Satisfaction Prediction) 
+- [Link to HTML](Hackathon Satisfaction Prediction/MIT DSML Hackathon.html) 
+- [View README](Hackathon Satisfaction Prediction) 
 
-### [Amazon Product Recommendation System](/Amazon%20Product%20Recommendation%20System)
+### [Amazon Product Recommendation System](https://github.com/dam-runner/Data-Science-Projects/tree/main/Amazon-Product-Recommendations)
 - **Objective**: Build a recommendation system for Amazon's electronic products.
-- **Skills and Techniques**: Collaborative filtering (user-user/item-item), Singular Value Decomposition (SVD), data preprocessing, exploratory data analysis.
-- **Tools Used**: Python, Pandas, NumPy, Scikit-Surprise, Matplotlib, Seaborn.
+- **Skills and Techniques**: Collaborative filtering (user-user/item-item), Singular Value Decomposition (SVD), data preprocessing, exploratory data analysis, pickling, pipelines, improved filtering and RAM management, custom progress bars to GridSearchCV
+- **Tools Used**: Python, Pandas, NumPy, Scikit-Surprise, Matplotlib, Seaborn, Google Colab
 - [Link to HTML](Amazon Product Recommendations/Recommendation_System_Project_(Final).html)
-- [Link to Repository](Amazon Product Recommendations) 
+- [View README](Amazon Product Recommendations) 
   
-### [FoodHub Data Analysis](/FoodHub%20Order%20Analysis)
+### [FoodHub Data Analysis](https://github.com/dam-runner/Data-Science-Projects/tree/main/FoodHub-Order-Analysis)
 - **Objective**: Analyze FoodHub, an online food delivery service, to enhance customer experience and improve business operations.
 - **Skills and Techniques**: Data cleaning and preprocessing, exploratory data analysis (EDA), univariate and multivariate analysis, data visualization.
 - **Tools Used**: Python, Pandas, Matplotlib, Seaborn.
 - [Link to HTML](FoodHub Order Analysis/McArtor_FDS_FoodHub_Project.html)
-- [Link to Repository](FoodHub Order Analysis) 
+- [View README](FoodHub Order Analysis) 
 
-### [ExtraaLearn Project - Lead Conversion Prediction](/ExtraaLearn%20Project)
+### [ExtraaLearn Project - Lead Conversion Prediction](https://github.com/dam-runner/Data-Science-Projects/tree/main/Predicting-Potential-Customers)
 - **Objective**: Predict lead conversion for an EdTech startup using machine learning.
-- **Skills and Techniques**: Decision Tree, Random Forest classifiers, GridSearchCV, feature engineering, model evaluation.
-- **Tools Used**: Python, Scikit-learn, Jupyter Notebook.
+- **Skills and Techniques**: Decision Tree, Random Forest classifiers, GridSearchCV, feature engineering, model evaluation, data visualization, feature importances
+- **Tools Used**: Python, Scikit-learn, Jupyter Notebook, Matplotlib, Seaborn
 - [Link to HTML](Predicting Potential Customers/ExtraaLearn_Project.html)
-- [Link to Repository](Predicting Potential Customers) 
+- [View README](Predicting Potential Customers) 
 
 ## About Me
 
@@ -39,7 +39,7 @@ I'm David McArtor, a multidisciplinary professional dedicated to applying a wide
 
 ## Get in Touch
 
-- **LinkedIn**: [David McArtor](www.linkedin.com/in/david-mcartor-496724106)
+- **LinkedIn**: [David McArtor]([www.linkedin.com/in/david-mcartor-496724106](https://www.linkedin.com/in/david-mcartor-496724106/))
 - **Email**: [damrunner@gmail.com](mailto:damrunner@gmail.com)
 - **GitHub**: [dam-runner](https://github.com/dam-runner)
 
