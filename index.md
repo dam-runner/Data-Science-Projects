@@ -33,6 +33,14 @@ Welcome to my portfolio of data science projects. This collection showcases a ra
 - [Link to HTML](Predicting Potential Customers/ExtraaLearn_Project.html)
 - [View README](Predicting Potential Customers) 
 
+### [Fitness Tracker Analysis](https://github.com/dam-runner/Data-Science-Projects/tree/main/Fitness_Tracker_Project)
+- **Objective**: Analyze fitness tracker data to extract insights into user behavior and activity patterns, with an emphasis on providing actionable recommendations to enhance the marketing strategy for Bellabeat.
+- **Skills and Techniques**: Data cleaning and preprocessing, exploratory data analysis (EDA), cluster analysis (k-means, elbow and silhouette techniques, hierarchical), correlation analysis, linear regression modeling, outlier analysis, data visualization.
+- **Tools Used**: R, RStudio, Posit Cloud, R packages including `tidyverse`, `janitor`, `lubridate`, `dplyr`, `ggplot2`, `purrr`, `cluster`, `factoextra`, `corrplot`.
+- **Outcome**: Identified three distinct user clusters, uncovered the relationship between sleep and activity, and provided tailored recommendations for engaging different user segments.
+- [Link to HTML](Fitness_Tracker_Project/Fitness_Tracker_Project.html)
+- [View README](Fitness_Tracker_Project/README.md)
+  
 ## About Me
 
 I'm David McArtor, a multidisciplinary professional dedicated to applying a wide variety of tools and techniques to solve challenging real-world problems. With a background in multiple fields, I bring a unique perspective to data analysis and model building.
