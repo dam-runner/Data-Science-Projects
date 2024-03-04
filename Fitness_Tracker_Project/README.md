@@ -42,7 +42,8 @@ Modeling and Insights:
 Throughout this process, I prioritized reproducibility and transparency, documenting each step of my analysis to ensure that others could follow my methodology and arrive at similar conclusions. My use of a wide range of R packages, from `dplyr` and `ggplot2` for data manipulation and visualization to `cluster` and `factoextra` for advanced statistical analysis, was instrumental in uncovering actionable insights from the fitness tracker data.
 
 ## How to Run
-1. Clone this repository to your local machine.
-2. Open `fitness_tracker_project.Rmd` in RStudio.
+1. Clone this repository folder to your local machine.
+2. Open `fitness_tracker_project.Rmd` in RStudio or Posit Cloud.
 3. Install the required R packages using `install.packages()`.
-4. Knit the document to produce the HTML output, which includes all analysis steps and findings.
+4. Upload the data files found in fitness_tracker_data_files.zip
+5. Run all chunks in the project.
