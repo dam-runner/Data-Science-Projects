@@ -1,7 +1,7 @@
 # ExtraaLearn Project - Lead Conversion Prediction
 
 ## Overview
-This project is part of an online course in Data Science and Machine Learning offered by MIT. The primary goal of the ExtraaLearn Project is to leverage machine learning techniques to predict which leads are more likely to convert into paying customers for an EdTech startup. The project encapsulates the complete data science workflow, starting from data exploration and preprocessing, to building and tuning machine learning models, and finally, interpreting the results to derive actionable insights.
+This project is part of an online course in Data Science and Machine Learning offered by MIT. The primary goal of the ExtraaLearn Project is to leverage machine learning techniques to predict which leads are more likely to convert into paying customers for an EdTech startup. The project encapsulates the complete data science workflow, starting from data exploration and preprocessing, to building and tuning machine learning models, and finally, interpreting the results to derive actionable insights.  The dataset is proprietary to Great Learning, so cannot be shared here.
 
 ## Data Description
 The dataset used in this project contains various attributes of leads and their interactions with the ExtraaLearn platform. Key features include age, current occupation, interaction type, profile completion level, website visits, and engagement metrics. The target variable is a binary indicator representing whether a lead was converted into a paying customer.
@@ -20,9 +20,13 @@ The dataset used in this project contains various attributes of leads and their 
 - Advanced machine learning techniques like Decision Trees and Random Forests, coupled with hyperparameter tuning, proved effective in predicting lead conversions.
 
 ## Instructions for Running the Notebook
+**Note: The dataset is propriety and not included here, so this project cannot be executed fully and is view-only**
+
+These are the steps one would take if you had access to the dataset.
+
 To run the notebook:
 1. Clone the repository or download the Jupyter notebook file.
-2. Ensure that all dependencies, as listed in the 'requirements.txt' file, are installed.
+2. Ensure that all dependencies are installed.
 3. Open the notebook in Jupyter or a compatible IDE and execute the cells sequentially.
 
 ## Acknowledgements

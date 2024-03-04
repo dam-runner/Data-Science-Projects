@@ -1,0 +1,1403 @@
+---
+title: "Fitness Tracker Case Study"
+author: "David McArtor"
+date: "11/3/2023"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Introduction
+
+This project is being undertaken as a capstone to the Google Data Analytics Course on Coursera. It aims to exhibit a holistic application of the data analysis methodologies, tools, and techniques learned throughout the course. The core objective of this exercise is to glean actionable insights from consumer data to steer the marketing strategy of Bellabeat, a high-tech manufacturer of health-focused products for women, thereby unlocking potential growth opportunities.
+
+# Case Study Background
+
+Bellabeat, a high-tech company specializing in health-focused products for women, aims to broaden its market presence in the global smart device sector. Under the vision of Urška Sršen, the co-founder and Chief Creative Officer, analyzing smart device fitness data is seen as a catalyst for unveiling new growth opportunities. The product lineup includes the Bellabeat App, Leaf, Time, and Spring.
+
+Sršen has tasked the marketing analytics team to delve into smart device usage data to uncover insights into consumer behaviors. The insights derived are anticipated to shape Bellabeat's marketing strategy, with an end goal of presenting an analysis and strategic recommendations to the executive team.
+
+## Business Questions:
+
+1. What are some trends in smart device usage?
+2. How could these trends apply to Bellabeat customers?
+3. How could these trends help influence Bellabeat marketing strategy?
+
+
+The task at hand navigates through the sequential stages of the data analysis process: posing pertinent questions, preparing the data, processing the data, undertaking an in-depth analysis, sharing the insights, and advising actions based on the findings.
+
+## Dataset:
+
+The data harnessed for this analysis is sourced from the [FitBit Fitness Tracker Data](https://www.kaggle.com/arashnic/fitbit) available on Kaggle, contributed under the CC0: Public Domain license by Mobius. This dataset encapsulates personal fitness tracker data from thirty-three consenting Fitbit users, comprising minute-level output for physical activity, heart rate, and sleep monitoring. The data encompasses vital metrics such as daily activity, steps, and heart rate, which serve as a conduit to scrutinize users' habits. This substantial dataset provides a foundation to explore and comprehend how consumers interact with their smart devices, which in turn, is instrumental in formulating data-driven marketing strategies for Bellabeat.
+
+**Limitations:**
+
+Sample Size: With data from 33 users, the sample size is relatively small and may not provide a broad representation of general smart device usage trends.
+
+Single Brand Usage: The data solely reflects Fitbit device usage, which could lead to brand-specific biases.
+Missing Demographics: There's no demographic information provided which might be crucial to understanding different user behaviors.
+
+Incomplete Data: Some metrics are available for a subset of users only, e.g., heart rate data is available for just 7 users, and sleep data by minute is available for 24 users.
+
+Interpretability: There is no metadata included for these data, with no description of how they are collected or descriptions of some of the variables included.
+
+Limited timeframe: These data were collected over a just a period of one month (mid-April to mid-May) in 2016, and thus cannot show long-term trends or seasonal variation.
+
+Potential bias: The participants responded to a survey and submitted their FitBit data.  We have no data on how these participants were selected or whether they are in any way representative.
+
+
+## Loading packages and libraries
+
+```{r Load Libraries and Packages}
+install.packages("tidyverse")
+install.packages("janitor")
+library(tidyverse)
+library(janitor)      # For initial data cleaning, such as removing empty columns/rows and cleaning column names
+library(psych)        # For more complex summary information
+library(tidyr)        # For tidying data, like gathering, spreading, and    handling missing values
+library(readr)        # For efficiently reading in data
+library(lubridate)    # For handling and manipulating date/time data
+library(dplyr)        # For data manipulation and transformation
+library(ggplot2)      # For data visualization
+```
+
+
+## Loading files
+The available CSV files include a number of data elements available as daily, hourly, or by minute.  I will ignore the minute-by-minute data, as many of the daily datasets contain total minutes per day.  The dailyActivity_merged file appears to aggregate a number of other files, so I will focus on that, sleepDay, Weight, and the hourly datasets to explore more granular features.
+
+```{r}
+daily_activity <- read.csv("dailyActivity_merged.csv")
+
+sleep_day <- read.csv("sleepDay_merged.csv")
+
+weight <- read.csv("weightLogInfo_merged.csv")
+
+hourly_calories <- read.csv("hourlyCalories_merged.csv")
+
+hourly_intensities <- read.csv("hourlyIntensities_merged.csv")
+
+hourly_steps <- read.csv("hourlySteps_merged.csv")
+```
+
+## Exploring data organization
+
+Now, I will explore each of the datasets to get a feel for how they are organized and if anything seems unusual or raises any questions.
+
+
+First, a look at the daily_activity data:
+```{r Daily Activity Review}
+head(daily_activity)
+str(daily_activity)
+```
+
+Now for the sleep day data:
+```{r Sleep Day Review}
+head(sleep_day)
+str(sleep_day)
+unique(sleep_day$SleepDay) # To see if the hourly information holds any value
+```
+
+Hourly calories:
+```{r Hourly Calories Report}
+head(hourly_calories)
+str(hourly_calories)
+```
+
+Hourly steps:
+```{r Hourly Steps Report}
+head(hourly_steps)
+str(hourly_steps)
+```
+
+Hourly intensities:
+```{r Hourly Intensities Report}
+head(hourly_intensities)
+str(hourly_intensities)
+```
+
+And finally weight:
+
+```{r Weight Report}
+head(weight)
+str(weight)
+```
+
+**Observations:**
+There aren't many surprises here.  For all of them, the date and time are of the character datatype, so I will have to convert these to DateTime.  The hourly calories, steps, and intensities all have the same number of observations and appear to have the same IDs, so I should be able to merge these together later.
+
+## Review Data for Cleaning
+
+Next, I'll check each dataset under consideration for number of unique IDs (to understand how many participants are represented), as well as for null and duplicate values to inform my data cleaning procedure.
+
+```{r Data Report}
+# Load datasets into list
+datasets <- list(
+   "Daily Activity" = daily_activity,
+   "Sleep Day" = sleep_day,
+   "Weight" = weight,
+   "Hourly Calories" = hourly_calories,
+   "Hourly Intensities" = hourly_intensities,
+   "Hourly Steps" = hourly_steps
+)
+
+# Define a function to compute statistics for each dataset
+# Modify the compute_stats function to include dataset_name as a column
+compute_stats <- function(data, dataset_name) {
+  data.frame(
+    Dataset_Name = dataset_name, # the name of each csv file
+    Unique_IDs = length(unique(data$Id)), # number of unique IDs
+    Null_Values = sum(is.na(data)), # number of nulls
+    Duplicated_Rows = sum(duplicated(data)) # number of duplicated rows
+  )
+}
+
+# Use purrr::imap_dfr to apply the function to each dataset and combine the results into a single data frame
+stats_ds <- purrr::imap_dfr(datasets, compute_stats)
+
+# View the summary data frame
+print(stats_ds)
+```
+
+This reveals that my weightLogInfo dataset only has 8 participants, which is few enough that I don't think I can make an informed analysis, so I will exclude it from further analysis.  The sleepDay file only has 24 of 33 participants, which is not ideal, but I will consider it anyway while keeping that in mind.  It also has 3 duplicates that I will need to clean up.  The other files look like they're in good shape.
+
+
+## Cleaning the data
+
+First, I'll remove the duplicate rows in sleep_data
+
+```{r Remove duplicates}
+sleep_day <- distinct(sleep_day)
+```
+
+Next, I'm going to convert the date data in daily_activity and sleep_day from character data type to Date data type.  Sleep_day ostensibly has time data in there, but it is all identical (midnight) and thus I will drop it.  I will then merge the datasets so that I have all of the sleep data (with 24 participants) along with all of the activity data that corresponds to it.  I will use this new dataset (activity_plus_sleep) for my sleep-related analysis, and keep my larger daily_activity dataset for general activity analysis.
+
+```{r}
+# Confirm I have lubridate ready to go
+library(lubridate)
+
+# Convert ActivityDate into Date type
+daily_activity$ActivityDate <- mdy(daily_activity$ActivityDate)
+
+# Turn SleepDay from format of "m/d/Y H:M:S" to just date
+sleep_day$SleepDay <- as.Date(mdy_hms(sleep_day$SleepDay))
+
+# Perform an inner join on the Id and the date columns
+activity_plus_sleep <- inner_join(daily_activity, sleep_day, by = c("Id", "ActivityDate" = "SleepDay"))
+
+activity_plus_sleep <- activity_plus_sleep %>%
+    rename(Date = ActivityDate)
+
+daily_activity <- daily_activity %>%
+    rename(Date = ActivityDate)
+
+# Check the first few rows of the new dataset
+head(activity_plus_sleep)
+```
+
+And then I will do something similar to hourly_calories, hourly_intensities, and hourly_steps.  I will convert their date and time information into DateTime format and then merge them into one dataset.  
+
+```{r}
+
+# Ensure libraries are loaded
+library(dplyr)
+library(lubridate)
+
+# Create a function to apply the same transformations to each dataset
+process_hourly_data <- function(data) {
+  data %>%
+    mutate(
+      ActivityHour = mdy_hms(ActivityHour), # Convert to datetime format
+      Hour = hour(ActivityHour),            # Extract hour information into a new column
+      Date = as.Date(ActivityHour)          # Extract date information into a new column
+    ) %>%
+      select(-ActivityHour)                 # Remove the original ActivityHour column
+}
+
+# Apply the function to each of the other datasets
+hourly_calories <- process_hourly_data(hourly_calories)
+hourly_intensities <- process_hourly_data(hourly_intensities)
+hourly_steps <- process_hourly_data(hourly_steps)
+
+# Check the changes
+head(hourly_calories)
+head(hourly_intensities)
+head(hourly_steps)
+
+```
+This confirms that I was able to convert to date format and extract the hourly information, so now I can join these datasets together.
+
+```{r}
+# Perform a full outer join on the Id, Date, and Hour columns
+hourly_data_partial <- full_join(hourly_calories, hourly_intensities, by = c("Id", "Hour", "Date"))
+hourly_data <- full_join(hourly_data_partial, hourly_steps, by = c("Id", "Hour", "Date"))
+
+# View the first few rows and structure of the merged data
+head(hourly_data)
+str(hourly_data)
+```
+Now, there are three data sets I will be working with: daily_activity (a range of different activity variables with 33 participants), activity_plus_sleep (a range of activity and sleep variables with 24 participants), and hourly_data (hourly intensity, steps, and calories burned data from 33 participants).  Before I begin the analysis, there is one more variable I'd like to add to my data sets: the day of the week.
+
+```{r}
+add_week_day <- function(data) {
+   data <- data %>%
+  mutate(
+    WeekDay = wday(Date, label = TRUE, abbr = FALSE) # Adds the weekday as a factor with full names
+  )}
+
+# Apply the function to each of the other datasets
+daily_activity <- add_week_day(daily_activity)
+activity_plus_sleep <- add_week_day(activity_plus_sleep)
+hourly_data <- add_week_day(hourly_data)
+```
+
+## Final adjustments to the datasets and Univariate Analysis
+Now, let's take a look at the final datasets we will be working with:
+
+```{r}
+head(activity_plus_sleep)
+
+summary(activity_plus_sleep)
+
+suppressWarnings({
+  describe(activity_plus_sleep)
+})
+
+unique_count1 <- sapply(activity_plus_sleep, n_distinct)
+unique_count1
+```
+
+Based on this review, I'm going to remove the "LoggedActivitiesDistance" and "SedentaryActiveDistance" as these two columns contain almost uniformly 0s, and "TotalSleepRecords" as I don't plan to explore that datum.
+
+```{r}
+activity_plus_sleep <- select(activity_plus_sleep, -LoggedActivitiesDistance, -SedentaryActiveDistance, -TotalSleepRecords)
+
+#And check again to confirm
+head(activity_plus_sleep)
+```
+
+Now let's check out daily_activity:
+
+```{r}
+head(daily_activity)
+
+summary(daily_activity)
+
+suppressWarnings({
+  describe(daily_activity)
+})
+
+unique_count1 <- sapply(daily_activity, n_distinct)
+unique_count1
+```
+I'm going to remove the same columns that don't contain much information:
+```{r}
+daily_activity <- select(daily_activity, -LoggedActivitiesDistance, -SedentaryActiveDistance)
+
+head(daily_activity)
+```
+
+I also have two variables (TotalDistance and TrackerDistance) that appear to be identical based on the header rows.  Let's look at this more carefully.
+
+```{r Correlation of TotalDistance and TrackerDistance}
+cor(daily_activity$TotalDistance, daily_activity$TrackerDistance, use = "complete.obs")
+
+```
+These are almost, though not quite, identical, so I will remove tracker distance.
+
+```{r Removing TrackerDistance column}
+# Removing TrackerDistance column from daily_activity dataset
+
+library(dplyr)
+daily_activity <- select(daily_activity, -TrackerDistance)
+
+```
+
+
+### Examine and Clean hourly_data
+
+Now for examining and cleaning hourly_data
+```{r}
+head(hourly_data)
+
+summary(hourly_data)
+
+suppressWarnings({
+  describe(hourly_data)
+})
+
+unique_count1 <- sapply(hourly_data, n_distinct)
+unique_count1
+```
+
+The Date, Hour, WeekDay and Id variables are all as expected, and WeekDay is roughly evenly distributed.  Calories is somewhat left-skewed with a max much larger than the 3rd quartile, and so may well contain outliers, though the mean and median are not too far apart. A max of 948 calories burned in one hour, though physically possible also seems highly unlikely, calling in to question the accuracy of that. TotalIntensity is highly left-skewed with a maximum value an order of magnitude higher than the 3rd quartile, and StepTotal is even worse, with its max two orders of magnitude higher than the 3rd quartile and the mean and median very far apart.  I will examine these variables for outliers.
+
+The apparent distribution of the "AverageIntensity" column makes me wonder if this is a column also largely filled with zeros, and so I want to look at that specifically.
+
+```{r}
+
+# Calculate the percentage of zeros in the AverageIntensity column
+percentage_zeros <- mean(hourly_data$AverageIntensity == 0) * 100
+
+# Print the result
+percentage_zeros
+
+```
+Only about 40% of the values are zero, so there might be some useful data here, so we'll keep it.
+
+
+```{r Defining a histbox function}
+
+#Defining a function to create a box plot and histogram
+
+hist_box <- function(dataframe, column_name) {
+  col_sym <- sym(column_name)  # Convert string to symbol
+
+# Box Plot
+box_plot <- ggplot(dataframe, aes(x = factor(1), y = !!col_sym)) + 
+  geom_boxplot() +
+  theme_minimal() +
+  ggtitle(paste("Box Plot of", column_name)) +
+  xlab("") # Remove x-axis label
+
+print(box_plot)
+
+  # Histogram
+  histogram <- ggplot(dataframe, aes(x = !!col_sym)) + 
+    geom_histogram(bins = 30, fill = "blue", color = "black") +
+    theme_minimal() +
+    ggtitle(paste("Histogram of", column_name))
+  
+  print(histogram)
+}
+
+```
+```{r Running the histbox on hourly_data columns}
+# Running the histbox on hourly_data columns
+hist_box(hourly_data, "Calories")
+hist_box(hourly_data, "TotalIntensity")
+hist_box(hourly_data, "StepTotal")
+```
+
+
+
+## Analysis
+
+### Hourly Data (Steps, Intensity, Calories)
+
+Let's start with the hourly_data, let's examine how these data vary over the course of a day and over the course of a week.  First, I'll create an aggregate dataset of the means for the primary variables of interest (Intensity, StepTotal, Calories) grouped by Hour, and then visualize that.
+
+```{r Aggregate Hourly Data}
+library(dplyr)
+hourly_agg <- hourly_data %>%
+  group_by(Hour) %>%
+  summarise(
+    AvgStepTotal = mean(StepTotal, na.rm = TRUE),
+    AvgTotalIntensity = mean(TotalIntensity, na.rm = TRUE),
+    AvgCalories = mean(Calories, na.rm = TRUE)
+  )
+
+# Since the scale of StepTotal is different from TotalIntensity and Calories, I'll plot StepTotal by itself.
+library(ggplot2)
+# Plot for StepTotal
+ggplot(hourly_agg, aes(x = Hour)) +
+  geom_line(aes(y = AvgStepTotal, color = "Step Total")) +
+  labs(y = "Average Step Total", color = "Metric") +
+  theme_minimal() +
+  ggtitle("Average Step Total by Hour")
+
+# Plot for TotalIntensity and Calories on the same plot
+ggplot(hourly_agg) +
+  geom_line(aes(x = Hour, y = AvgTotalIntensity, color = "Total Intensity")) +
+  geom_line(aes(x = Hour, y = AvgCalories, color = "Calories")) +
+  scale_color_manual(values = c("Total Intensity" = "red", "Calories" = "green")) +
+  labs(y = "Average Value", x = "Hour of the Day", color = "Metric") +
+  theme_minimal() +
+  ggtitle("Average Total Intensity and Calories by Hour")
+```
+
+We can see a clear trendline here in terms of which hours of the day the users (in aggregate) are recording the most steps, calories burned, and intensity, though we do see greater variation hourly in terms of steps.  We see a very low amount of activity and steps from roughly 10pm to 5am, corresponding to the most common hours for sleep, though the fact that we still see some calories burned indicates that users are wearing their Fitbit and that we have a baseline metabolism of around 70 calories burned per hour during sleep.
+
+Activity increases sharply from 5am to 8am, and then varies up and down from 8am to 8pm, where it drops sharply.  During the main hours of the day, we see a clear bimodal distribution, with the highest peak at around 6pm-7pm (likely corresponding to people exercising or doing other activities after work), a lower peak between 12pm and 2pm (perhaps corresponding to exercise or other activity during a lunch break from work), and a significant trough between those two peaks right around 3pm, which from personal experience corresponds with my lowest energy time of day.
+
+All three graphs corroborate this, though the variation is clearest in the StepTotal chart.
+
+Given that these graphs are aggregated across all days of the week (and my conclusions are mostly surmising about how this interacts with the work day), let's see how much variation there is between weekdays and weekends, focusing on StepTotal as the variable.
+
+```{r Plotting hourly step variation between weekdays and weekends}
+library(dplyr)
+library(ggplot2)
+
+# This is to plot hourly step variation between weekdays and weekends
+
+# Create a new column to distinguish between Weekday and Weekend
+hourly_data <- hourly_data %>%
+  mutate(DayType = case_when(
+    WeekDay %in% c('Saturday', 'Sunday') ~ 'Weekend',
+    TRUE ~ 'Weekday'
+  ))
+
+# Recalculate AvgStepTotal with the new grouping
+hourly_agg_daytype <- hourly_data %>%
+  group_by(Hour, DayType) %>%
+  summarise(AvgStepTotal = mean(StepTotal, na.rm = TRUE)) %>%
+  ungroup()
+
+# Plot for Weekdays
+ggplot(hourly_agg_daytype %>% filter(DayType == 'Weekday'), aes(x = Hour, y = AvgStepTotal)) +
+  geom_line(color = "blue") +
+  labs(y = "Average Step Total", x = "Hour of the Day") +
+  theme_minimal() +
+  ggtitle("Average Step Total by Hour on Weekdays")
+
+# Plot for Weekends
+ggplot(hourly_agg_daytype %>% filter(DayType == 'Weekend'), aes(x = Hour, y = AvgStepTotal)) +
+  geom_line(color = "red") +
+  labs(y = "Average Step Total", x = "Hour of the Day") +
+  theme_minimal() +
+  ggtitle("Average Step Total by Hour on Weekends")
+
+```
+
+Our graph of the step total during the weekdays looks very similar to our previous conclusions, suggesting that a lot of the variation is based on the workday (and being suggestive of the idea that most users work a standard week).  During the weekdays, we see the most activity (in terms of steps taken) happening between 6-7pm (soon after work), with a smaller peak between 12pm-2pm (during lunchtime).  On the weekends, we get a somewhat different spread.  The variations around sleep are very similar (with activity dropping sharply around 8pm), but the peak activity time is between 1-2pm, with a trough around 4pm (instead of 3pm like during the weekdays), and another smaller peak around 7pm.  
+These data suggest that the most popular times for activity (in terms of steps registered on the Fitbit) are midday (12pm-2pm) and in the evening (around 7pm), and a trough in the middle (between 3-4pm) though the size of the peaks switches on the weekends compared to the weekdays.
+
+Let's examine overall how much variation in activity we get over the days of the week, in aggregate.
+
+```{r Visualizing weekly trends in hourly data}
+# Visualizing trends by day of the week in hourly data
+
+daily_agg <- hourly_data %>%
+  group_by(WeekDay) %>%
+  summarise(
+    AvgStepTotal = mean(StepTotal, na.rm = TRUE),
+    AvgTotalIntensity = mean(TotalIntensity, na.rm = TRUE),
+    AvgCalories = mean(Calories, na.rm = TRUE)
+  )
+
+#I'll create separate plots for each one, since they are on different scales
+
+ggplot(daily_agg, aes(x = WeekDay)) +
+  geom_bar(aes(y = AvgStepTotal, fill = "Step Total"), stat = "identity", position = "dodge") +
+  labs(y = "Average Value", fill = "Metric") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Average Step Total by WeekDay")
+
+ggplot(daily_agg, aes(x = WeekDay)) +
+  geom_bar(aes(y = AvgTotalIntensity, fill = "Total Intensity"), stat = "identity", position = "dodge") +
+  labs(y = "Average Value", fill = "Metric") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Average Total Intensity by WeekDay")
+
+ggplot(daily_agg, aes(x = WeekDay)) +
+    geom_bar(aes(y = AvgCalories, fill = "Calories"), stat = "identity", position = "dodge") +
+  labs(y = "Average Value", fill = "Metric") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Average Calories Burned by WeekDay")
+
+```
+
+Interestingly, Calories shows little variation (though the variation it does have matches the other variables), which corresponds with the idea that most of the calories that we burn is from our basic metabolism and that exercise doesn't have an exceptional effect.
+
+Looking at Intensity and Steps, we see nearly identical graphs (with the exception of Thursday and Friday: here we see more steps on Thursday and fewer on Friday, while we see a higher average intensity on Friday.  This may correspond to different types of activity on the two days [for example, more intense activity on Friday that doesn't require as many steps, like swimming], but there is not enough variation to be sure).  Otherwise, we a clear trend with Saturday being the most active day of the week (in terms of Avg Steps and Avg Total Intensity), followed by Tuesday and then Monday, with Sunday clearly being the least active day of the week.
+
+Summarizing the Hourly Data overall, we can make the following conclusions:
+
+- The most active days among the users in this dataset (on average) are Saturdays, Tuesdays, and Mondays.
+- Sundays are the least active days.
+- On weekdays, the most active times are around 6pm-7pm, with a smaller peak from 12pm-2pm, and a significant trough around 3pm.
+- On weekends, the most active times are around 12pm-2pm, with a smaller peak around 7pm, and a significant trough around 4pm.
+- There is not much variation in calories burned day to day, despite variations in activity
+
+### Daily Activity
+
+Let's explore the daily_activity dataset in more detail now.  Let's remind ourselves of the variables we're looking and some of the summary data.
+
+```{r Examining daily_activity dataset}
+summary(daily_activity)
+head(daily_activity)
+```
+
+Here we have daily data showing total steps, total distance, calories, weekday, and measures of both minutes and distance traveled in a variety of different activity categories (presumably based on heart-rate, though that isn't mentioned in the metadata), with the activity categories being: Sedentary, Lightly Active, Fairly Active, Moderately Active, and Very Active.  Note: There is "ModeratelyActiveDistance" and "FairlyActiveMinutes", which I presume to be alluding to the same thing.
+
+Let's start by running all these variables through my previously defined histbox function to visualize distributions.
+
+```{r}
+variables_to_plot <- c("TotalSteps", "TotalDistance", "VeryActiveDistance", 
+                       "ModeratelyActiveDistance", "LightActiveDistance", 
+                       "VeryActiveMinutes", "FairlyActiveMinutes", 
+                       "LightlyActiveMinutes", "SedentaryMinutes", "Calories")
+
+for(var in variables_to_plot) {
+  hist_box(daily_activity, var)
+}
+```
+*Activity Levels:*
+
+The range in TotalSteps and TotalDistance suggests a wide variation in daily activity levels among participants, with some being very inactive (min of 0 steps and 0 distance) and others being highly active (max of 36,019 steps and 28.03 km). The mean values being slightly higher than the median for both TotalSteps and TotalDistance indicate a right-skewed distribution, suggesting that a smaller number of very active individuals push the average up.
+
+*Intensity of Activity:*
+
+The minimum values for VeryActiveDistance, ModeratelyActiveDistance, LightActiveDistance, and VeryActiveMinutes are 0, indicating that there are days when participants do not engage in any significant physical activity.  The maximum values, especially for VeryActiveMinutes (210 minutes) and VeryActiveDistance (21.92 km), indicate that some participants engage in extensive high-intensity activities.  The averages for these variables suggest that most activity is light, with LightActiveDistance having a higher mean than VeryActiveDistance and ModeratelyActiveDistance.
+
+*Sedentary Behavior:*
+
+The wide range in SedentaryMinutes (from 0 to 1440 minutes, which is a full day) highlights varying levels of sedentary behavior among participants.
+The mean SedentaryMinutes is less than the median, suggesting a left-skewed distribution where most participants have higher sedentary minutes, but a significant number of very active participants lower the average.
+
+*Caloric Burn:*
+
+Calories burned ranges widely from 0 to 4900, indicating significant differences in daily energy expenditure among participants. This variance is likely influenced by the varying levels of physical activity and possibly by differences in metabolic rates or inaccuracies in calorie estimation algorithms.
+
+*Temporal Patterns:*
+
+The distribution of WeekDay entries suggests that the dataset is fairly balanced across different days of the week, with a slight increase in data points for Tuesday and Wednesday. This balance allows for analyzing daily patterns without bias toward specific days.
+
+*Other observations:*
+
+Across activity levels and distances (except Sedentary), the most common entry is 0 and the distribution is highly right-skewed, with significant outliers in most of the variables.  The most common entry in Sedentary Minutes is 1440, which is an entire day, and it's mostly left-skewed. Interestingly, there are a number of entries that show 400 or fewer minutes of Sedentary activity (including 0), which seems unlikely given that most people, I assume, are sedentary during sleep.  Couple this with the large number of entries showing 0 steps and 0 calories burned (and comparing this to our hourly data which showed a significant mean calorie burn even during sleeping hours), this suggests that either people weren't wearing their FitBits or they weren't functioning properly.  I'm assuming that registering 0 minutes for Very Active and Moderately Active minutes is not surprising, but that 0 calories, 0 steps, or 1440 minutes of sedentary activity are unexpected given that people are actively wearing their FitBits and they are working properly.  Let's remove some of these outliers and examine the histograms given that.
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Step 1: Filter out unlikely data points
+cleaned_daily_activity <- daily_activity %>%
+  filter(!(TotalSteps == 0 & Calories == 0)) %>%
+  filter(SedentaryMinutes < 1440)
+
+# Step 2: Re-examine distributions with histograms for key variables
+# Defining a function to create a histogram for a given column
+plot_histogram <- function(dataframe, column_name) {
+  ggplot(dataframe, aes_string(x = column_name)) +
+    geom_histogram(bins = 30, fill = "blue", color = "black") +
+    theme_minimal() +
+    ggtitle(paste("Histogram of", column_name))
+}
+# Let's focus on minutes rather than distance for now (though we'll keep TotalDistance)
+
+# Applying the function to key variables
+plot_histogram(cleaned_daily_activity, "TotalSteps")
+plot_histogram(cleaned_daily_activity, "TotalDistance")
+plot_histogram(cleaned_daily_activity, "VeryActiveMinutes")
+plot_histogram(cleaned_daily_activity, "FairlyActiveMinutes")
+plot_histogram(cleaned_daily_activity, "LightlyActiveMinutes")
+plot_histogram(cleaned_daily_activity, "SedentaryMinutes")
+plot_histogram(cleaned_daily_activity, "Calories")
+
+```
+These plots provide a perhaps more realistic view of peoples' actual activity levels.  We see quite a few entries with 0 "very active" or "fairly active" minutes, which is not surprising, but then "lightly active" minutes displays a close to normal distribution with a max around 500, which is very reasonable.  Both "Total Steps" and "Total Distance" display a roughly normal though right-skewed distribution, with a small number of outliers to the right.  The fact that they match is a good sign.  Interestingly, both "Sedentary Minutes" and "Calories" show a somewhat similar bimodal distribution, with Sedentary Minutes showing peaks at ~750 and ~1200, with a significant trough between ~800-1000.  "Calories" has a peak frequency of ~2000, a smaller peak at ~2800, and a trough around ~2500.  The range of calories burned is mostly reasonable, though it looks to be pretty generous to their users with a significant percentage of the population showing 2500+ calories burned in a day, which happens but is not especially common for people registering so many sedentary minutes.  
+
+
+Let's examine a few other explorations: 
+
+```{r Various explorations on cleaned_daily_activity}
+library(ggplot2)
+library(dplyr)
+
+# Correlation between TotalSteps, TotalDistance, and Calories
+correlation_matrix <- cleaned_daily_activity %>% 
+  select(TotalSteps, TotalDistance, Calories) %>% 
+  cor(use = "complete.obs")
+print(correlation_matrix)
+
+# Average activity by user
+avg_activity_by_user <- cleaned_daily_activity %>%
+  group_by(Id) %>%
+  summarise(
+    AvgSteps = mean(TotalSteps, na.rm = TRUE),
+    AvgActiveMinutes = mean(VeryActiveMinutes + FairlyActiveMinutes + LightlyActiveMinutes, na.rm = TRUE),
+    AvgCalories = mean(Calories, na.rm = TRUE)
+  )
+print(avg_activity_by_user)
+
+# Time series of activity
+cleaned_daily_activity %>% 
+  group_by(Date) %>%
+  summarise(SumSteps = sum(TotalSteps)) %>%
+  ggplot(aes(x = Date, y = SumSteps)) +
+  geom_line() +
+  labs(title = "Daily Total Steps Over Time", x = "Date", y = "Total Steps")
+
+# Boxplot of Total Steps by WeekDay
+ggplot(cleaned_daily_activity, aes(x = WeekDay, y = TotalSteps)) +
+  geom_boxplot() +
+  labs(title = "Total Steps by Day of the Week", x = "Day of the Week", y = "Total Steps")
+
+```
+**Correlation**
+
+When it comes to TotalSteps, TotalDistance, and Calories, we see an extremely strong correlation between steps and distance (not surprising), and only a moderate correlation between steps and calories and distance and calories, which is also not surprising given that most of our calorie expenditure is from our baseline metabolism and only affected somewhat by our activity.
+
+**Steps over time**
+
+There isn't a clear trend of steps over time, except for a steep dropoff in steps that last couple days of this time period.  I'll look at that more carefully to see if it needs to be removed, or if it might signify something else. 
+
+**Steps by day of the week**
+We see a similar trend to the hourly data in that Saturdays, Mondays, and Tuesdays show the most steps per day, and Sunday shows the least, but it adds more complexity to it.  Thursday actually looks more active (in terms of avg number of steps) than Monday when you look at the median and the max but has the lowest 1st quartile after Sunday.  Saturday shows a higher max and 3rd quartile than every other day of the week, but its median is actually lower than any day but Sunday.  This suggests we have more variation between people in terms of when they have the most activity.
+
+Let's examine the number of steps on different days of the period to see if the last couple days are an outlier that should be removed, and then we'll see if we can identify clusters of user types.
+
+```{r Examining Total Steps by Date}
+library(dplyr)
+
+
+# Summarize total steps by date
+steps_by_date <- cleaned_daily_activity %>%
+  group_by(Date) %>%
+  summarise(TotalStepsByDay = sum(TotalSteps, na.rm = TRUE)) %>%
+  arrange(Date)  # Optional: Arrange by date for chronological order
+
+# Display the summarized data
+print(steps_by_date)
+
+```
+
+For whatever reason, there is a massive drop in the last day of the sample period down to a third of the long-run median.  That was a Thursday and a Mother's Day, so I'm not sure if that had any effect, or related at all to it being the last day of the period under observation.  It's a significant enough outlier to warrant removing it from the sample.
+
+```{r Removing Last Day of Sample Period as Outlier}
+
+cleaned_daily_activity <- cleaned_daily_activity %>%
+  filter(Date != "2016-05-12")
+
+```
+
+**Identifying User Clusters**
+
+Now let's see if we can find user clusters based on aggregated data for each user.  First, we'll aggregate the data by user, scale it, and then use the elbow method to determine how many clusters I should look for.
+
+```{r}
+library(dplyr)
+library(cluster)
+library(purrr) 
+
+# Aggregate data by user
+user_activity_profile <- cleaned_daily_activity %>%
+  group_by(Id) %>%
+  summarise(
+    AvgTotalSteps = mean(TotalSteps, na.rm = TRUE),
+    AvgTotalDistance = mean(TotalDistance, na.rm = TRUE),
+    AvgVeryActiveMinutes = mean(VeryActiveMinutes, na.rm = TRUE),
+    AvgCalories = mean(Calories, na.rm = TRUE)
+    # Add more features as needed
+  )
+
+# Scale the data
+scaled_data <- scale(user_activity_profile[, -1])  # Excluding the Id column
+
+# Calculate WSS for a range of number of clusters
+set.seed(13)  # Ensure reproducibility
+wss <- map_dbl(1:10, function(k) {
+  kmeans(scaled_data, centers = k, nstart = 25)$tot.withinss
+})
+
+# Plot the elbow plot
+elbow_plot <- tibble(Clusters = 1:10, WSS = wss) %>%
+  ggplot(aes(x = Clusters, y = WSS)) +
+  geom_line() + geom_point() +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = "Elbow Method for Choosing Optimal k",
+       x = "Number of Clusters", y = "Total Within-Cluster Sum of Squares") +
+  theme_minimal()
+
+print(elbow_plot)
+
+```
+The elbow plot does not show a clear "elbow," or point of inflection, suggesting that there isn't an obvious cutoff where adding more clusters stops giving significantly better modeling of the data. This can happen for a few reasons:
+
+Data Homogeneity: The data points might not be clearly segmented into distinct groups, possibly indicating that the dataset has a relatively uniform distribution without distinct subgroups.
+
+Complex Cluster Shapes: K-means assumes that clusters are spherical and evenly sized, which might not be the case in the data. There could be clusters with non-spherical shapes or clusters that have very different sizes.
+
+Overlapping Clusters: There may be some degree of overlap between the clusters, making it difficult to partition the data into well-separated groups.
+
+High-Dimensional Space: If the data has many dimensions (features), the distance metrics used by K-means may become less meaningful (this is known as the "curse of dimensionality"), and the clusters may not be well-defined.
+
+Let's first see if we can get additional information through a Silhouette plot; after that, we could try hierarchical clustering, and then apply PCA.  
+
+```{r Silhouette plot}
+library(cluster)
+library(factoextra)  # For visualization of silhouette plots
+
+# Compute silhouette scores for multiple values of k
+sil_width <- list()
+for (k in 2:5) {
+  km <- kmeans(scaled_data, centers = k, nstart = 25)
+  sil <- silhouette(km$cluster, dist(scaled_data))
+  sil_width[[paste("k=", k, sep="")]] <- mean(sil[, "sil_width"])
+}
+
+# Plot silhouette scores for different numbers of clusters
+sil_plot <- tibble(
+  k = 2:5,
+  silhouette_width = unlist(sil_width)
+)
+
+ggplot(sil_plot, aes(x = k, y = silhouette_width)) +
+  geom_line() + geom_point() +
+  labs(title = "Silhouette Analysis for Optimal Number of Clusters",
+       x = "Number of Clusters",
+       y = "Average Silhouette Width") +
+  theme_minimal()
+
+# Print the silhouette plot
+print(sil_plot)
+
+# FViz Silhouette
+k <- 3  # Example: testing k = 3
+km <- kmeans(scaled_data, centers = k, nstart = 25)
+sil <- silhouette(km$cluster, dist(scaled_data))
+
+# Visualize silhouette plot
+fviz_silhouette(sil) + labs(title = paste("Silhouette Plot for k =", k))
+
+```
+**Silhouette Plot:** 
+
+This plot shows individual silhouette widths for each point within the clusters. A silhouette width close to +1 indicates that the sample is far away from the neighboring clusters. A value of 0 indicates that the sample is on or very close to the decision boundary between two neighboring clusters. Negative values indicate that those samples might have been assigned to the wrong cluster.
+
+For these data, the silhouette plot suggests that not all points are perfectly clustered, as there are bars below the average silhouette width (indicated by the red dashed line).
+The width for clusters 2 and 3 (green and blue bars) are generally higher than those for cluster 1 (red bars), suggesting that clusters 2 and 3 are more compact and better separated from each other than cluster 1 is from them.
+
+**Average Silhouette Width Plot:** 
+
+This plot presents the average silhouette width for different numbers of clusters. A higher average silhouette width indicates better cluster structure.
+
+The plot seems to show an increase in average silhouette width from 2 to 3 clusters and then a decrease as the number of clusters increases to 4 and 5.
+The peak at 3 clusters suggests that it might be the optimal number of clusters for this dataset, given that the average silhouette width is highest at this point. However, the average silhouette width for 3 clusters is not dramatically higher than for 2 or 4, indicating that the clusters might not be very well-defined or that there is some overlap between them.
+
+**Interpretation:**
+
+The absence of a clear "elbow" in the WSS plot and the moderate silhouette scores together suggest that while there may be some natural grouping in the data, it is not highly distinct.
+The clusters formed may not be very dense, or there may not be significant separation between them. This could be due to the inherent overlap in user behaviors or the chosen features not capturing clear distinctions between different user profiles.
+
+**Recommendation:**
+
+It looks from this analysis that just 2 clusters are probably the best division, suggesting that there may be one clearish cluster and everything else is lumped together, but none of the numbers are close to what we would expect with clear clusters.  Let's see what we can find with hierarchical clustering, and then attempt PCA followed by a clustering analysis.
+
+**Hierarchical Clustering**
+
+```{r Hierarchical clustering}
+# Using the previously defined 'scaled_data' dataset
+library(stats)
+
+# Compute the distance matrix
+d <- dist(scaled_data)
+
+# Perform hierarchical clustering using the Ward method
+hc <- hclust(d, method = "ward.D2")
+
+# Plot the dendrogram
+plot(hc, labels = FALSE, hang = -1)  # 'labels=FALSE' to avoid clutter if there are many data points
+
+```
+To me it looks like we get the biggest jumps around height 5, which gives us three clusters.  Let's cut the tree here, divide the users into the different clusters, and examine their statistics.
+
+```{r Examining 3 clusters from hierarchical clustering}
+
+# Step 1: Cut the dendrogram at height 5 to get cluster assignments
+cluster_assignments <- cutree(hc, h = 5)
+
+# Step 2: Join cluster assignments with aggregated user profile data
+user_activity_profile$Cluster <- cluster_assignments
+
+# Step 3: Join clusters with original data by mapping each 'Id' to its cluster
+cleaned_daily_activity <- cleaned_daily_activity %>%
+  left_join(user_activity_profile[c("Id", "Cluster")], by = "Id")
+
+# Step 4: Calculate summary statistics for the original data, grouped by cluster
+cluster_summary <- cleaned_daily_activity %>%
+  group_by(Cluster) %>%
+  summarise(across(c(TotalSteps, TotalDistance, VeryActiveMinutes, Calories, SedentaryMinutes, LightlyActiveMinutes), mean, na.rm = TRUE))
+
+# View the summary statistics for each cluster
+print(cluster_summary)
+```
+```{r Count Cluster Size}
+# Count unique Ids in each cluster
+library(dplyr)
+
+cluster_counts <- cleaned_daily_activity %>%
+  group_by(Cluster) %>%
+  summarise(UniqueIds = n_distinct(Id))
+
+print(cluster_counts)
+```
+
+Here, it looks like we do have three quite distinct clusters, particularly in regards to TotalSteps, TotalDistance, VeryActiveMinutes, and Calories.  
+
+Cluster 3 looks like our most active group, with 2.8x more avg daily steps than our least active group and 35% more steps than our moderately active group, with a similar amount of difference in TotalDistance. There is less variation, but still significant, in the area of Calories, which is not surprising given the substantial role of base-rate metabolic expenditure. Cluster 3 has ~70% more average daily calorie expenditure than Cluster 2, and 44% more than Cluster 1.  The difference is even greater in the VeryActive Minutes category, with Cluster 3 having ~15x more VeryActiveMinutes per day than Cluster 2, and 4x more than Cluster 1.  There is less variation seen between the groups in the other variables examined here, with the note that Cluster 2 has significantly more sedentary minutes than the other two groups, and Cluster 1, despite having significantly less VeryActiveMinutes compared to Cluster 3, actually has a significantly higher average daily LightlyActiveMinutes.
+
+**3 User Types**
+Let's make some describe our 3 User Types identified by the hierarchical clustering we've done and the analysis we've performed so far.
+
+*Cluster 3: "The Power Movers"* (4 out of 33 users)- This group is characterized by high levels of activity. They take significantly more steps, burn more calories and have a much higher active engagement, indicating a potentially sporty or fitness-focused lifestyle.  These are rare, representing only ~12% of our dataset.
+
+*Cluster 2: "The Casual Navigators"* (10 out of 33 users) - With the most sedentary minutes and by far the least very active minutes, this group might represent everyday individuals who demonstrate a very low level of intense activity, possibly due to work or lifestyle constraints that involve periods of inactivity.
+
+*Cluster 1: "The Consistent Pacers"* (19 out of 33 users- Although they have fewer very active minutes, their higher lightly active minutes suggest they maintain a steady pace throughout the day. This could be indicative of users who engage in regular, moderate-intensity activities, possibly integrating more low-impact exercises or frequent breaks from sedentary behavior into their routine.  These are your average people, representing over 57% of the dataset.
+
+Let's examine these three groups more closely to learn more about them.
+
+```{r Cluster Activity by Weekday}
+library(ggplot2)
+library(dplyr)
+
+# First, calculate the average number of TotalSteps for each combination of WeekDay and Cluster
+avg_steps_per_weekday <- cleaned_daily_activity %>%
+  group_by(WeekDay, Cluster) %>%
+  summarise(AvgTotalSteps = mean(TotalSteps, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(WeekDay = factor(WeekDay, levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")))
+
+# View the table
+print(avg_steps_per_weekday)
+
+# Now, plot the data
+ggplot(avg_steps_per_weekday, aes(x = WeekDay, y = AvgTotalSteps, fill = as.factor(Cluster))) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(title = "Average Total Steps per Day of the Week by Cluster",
+       x = "Day of the Week",
+       y = "Average Total Steps",
+       fill = "Cluster") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+Cluster 3, the Power Movers, shows significant variation (in Average Total Daily Steps) throughout the week, with Thursday and Saturday being their most active days and Monday being their least active.
+
+Cluster 2, our casual, most sedentary group shows less variation throughout the week, with Sunday and Monday being marginally more active (in terms of number of steps), and Friday being significantly lower.  Perhaps this group starts out the week with the most energy, but gradually loses steam over the week and is tired by Friday.
+
+Cluster 1, the Consistent Pacers, have Tuesday as their most active day (by number of steps), which is interesting because it goes against our overall pattern for the whole dataset, and corresponds to a lull for our other two groups.  After that, Monday, Thursday, and Saturday all show a similar relatively high number of steps, and Sunday is the most relaxed day.
+
+Let's see if we can apply these clusters to our hourly dataset, and see if there is significant differences between when they have most of their activity.
+
+```{r Examine hourly data by cluster}
+# Create a mapping of Id to Cluster
+cluster_mapping <- cleaned_daily_activity %>%
+  select(Id, Cluster) %>%
+  distinct()
+
+# Merge this cluster information into hourly_data
+hourly_data_clustered <- hourly_data %>%
+  left_join(cluster_mapping, by = "Id")
+```
+```{r Summarizing and visualizing hourly cluster data}
+# Group by Cluster, Hour, and WeekDay, then summarize
+hourly_activity_summary <- hourly_data_clustered %>%
+  group_by(Cluster, Hour, WeekDay) %>%
+  summarise(
+    AvgCalories = mean(Calories, na.rm = TRUE),
+    AvgStepTotal = mean(StepTotal, na.rm = TRUE),
+    AvgTotalIntensity = mean(TotalIntensity, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+# View the summarized data
+print(hourly_activity_summary)
+
+ggplot(hourly_activity_summary, aes(x = Hour, y = AvgCalories, color = as.factor(Cluster), group = Cluster)) +
+  geom_line() +
+  facet_wrap(~WeekDay) +
+  labs(title = "Average Calories Burned by Hour Across Clusters",
+       x = "Hour of the Day",
+       y = "Average Calories",
+       color = "Cluster") +
+  theme_minimal()
+```
+
+Here we have graphs of the average calories burned, per hour of the day, per day of the week, per cluster.  
+
+Overall Trends:
+
+There are noticeable peaks and troughs in calorie burn for all clusters throughout the day, which likely correspond to times of increased and decreased physical activity.
+
+Cluster 1 (Red):
+
+This cluster generally shows a moderate level of calorie burn throughout the day with less fluctuation compared to the other two clusters.
+There's a consistent peak around midday or early afternoon across most days, possibly indicating a time of regular exercise or activity.
+
+Cluster 3 (Blue):
+
+This cluster exhibits a higher calorie burn than Cluster 1, especially in the early morning and late evening, indicating early morning and late evening activities or workouts.
+The pattern is fairly consistent across all days, suggesting a routine that doesn't change much on weekends.
+
+Cluster 2 (Green):
+
+This cluster has a very distinct pattern with sharp peaks indicating intense periods of activity followed by periods of low calorie burn.
+There are significant peaks in the evening, especially on weekdays, which could indicate after-work exercise routines.
+The weekend pattern for this cluster is quite different, with a high peak on Saturday afternoon and a much flatter profile on Sunday, suggesting a rest day or less structured activity.
+
+Let's examine these a little more closely:
+
+**Cluster 1: Consistent Pacers**
+
+```{r Cluster 1: Consistent Pacers}
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+
+# Group by Cluster, Hour, and WeekDay, then summarize
+hourly_activity_summary <- hourly_data_clustered %>%
+  group_by(Cluster, Hour, WeekDay) %>%
+  summarise(
+    AvgCalories = mean(Calories, na.rm = TRUE),
+    AvgStepTotal = mean(StepTotal, na.rm = TRUE),
+    AvgTotalIntensity = mean(TotalIntensity, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+# Filter the summarized data for Cluster 1
+cluster_1_activity_summary <- hourly_activity_summary %>%
+  filter(Cluster == 1)
+
+# Reshape the data to long format
+cluster_1_activity_long <- cluster_1_activity_summary %>%
+  pivot_longer(
+    cols = c("AvgCalories", "AvgTotalIntensity"),
+    names_to = "Variable",
+    values_to = "Value"
+  )
+
+# Plot all three variables on the same graph
+ggplot(cluster_1_activity_long, aes(x = Hour, y = Value, color = Variable, group = Variable)) +
+  geom_line() +
+  facet_wrap(~WeekDay) +
+  labs(title = "Average Metrics by Hour for Cluster 1",
+       x = "Hour of the Day",
+       y = "Average Value",
+       color = "Metric") +
+  theme_minimal()
+
+```
+The Consistent Pacers (are largest and moderately active group), show the above patterns of activity throughout the day and week.  Here are some observations:
+
+Morning Hours:
+
+For both AvgCalories and AvgTotalIntensity, there is a gradual increase starting from the early hours, around 5-6 AM, which suggests some individuals begin their activities early in the day.
+
+Midday Peaks:
+
+The peak in AvgCalories occurs around 12 PM to 2 PM across most weekdays. This is the most prominent peak, suggesting a significant increase in physical activity, which could be associated with a lunchtime workout routine.
+On Saturdays, this peak starts a bit earlier, around 11 AM, indicating a change in schedule for the weekend.
+
+Afternoon and Evening Hours:
+
+After the midday peak, there is a gradual decline in AvgCalories which flattens out towards the evening, around 5 PM to 7 PM, before dropping more significantly.
+AvgTotalIntensity remains relatively flat throughout the day, with only a slight increase that coincides with the calorie burn peak, and it generally stays consistent into the evening hours.
+
+Troughs:
+
+The lowest points for both metrics occur in the very early morning, roughly from midnight to 5 AM, which is expected as this is typically a resting period for most people.
+Evening Activity:
+
+There is a minor secondary peak or plateau for AvgCalories in the evening, around 6 PM to 8 PM, noticeable on some weekdays. This could indicate another common time for exercise or activity after work.
+
+Weekend Variations:
+
+On Sundays, the curve for AvgCalories is flatter with a less pronounced peak, suggesting less activity. This could be interpreted as a rest day for many in the cluster.
+
+**Cluster 2: The Low and Slows**
+
+```{r Cluster 2: The Low and Slows}
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+
+# Group by Cluster, Hour, and WeekDay, then summarize
+hourly_activity_summary <- hourly_data_clustered %>%
+  group_by(Cluster, Hour, WeekDay) %>%
+  summarise(
+    AvgCalories = mean(Calories, na.rm = TRUE),
+    AvgStepTotal = mean(StepTotal, na.rm = TRUE),
+    AvgTotalIntensity = mean(TotalIntensity, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+# Filter the summarized data for Cluster 1
+cluster_2_activity_summary <- hourly_activity_summary %>%
+  filter(Cluster == 2)
+
+# Reshape the data to long format
+cluster_2_activity_long <- cluster_2_activity_summary %>%
+  pivot_longer(
+    cols = c("AvgCalories", "AvgTotalIntensity"),
+    names_to = "Variable",
+    values_to = "Value"
+  )
+
+# Plot all three variables on the same graph
+ggplot(cluster_2_activity_long, aes(x = Hour, y = Value, color = Variable, group = Variable)) +
+  geom_line() +
+  facet_wrap(~WeekDay) +
+  labs(title = "Average Metrics by Hour for Cluster 2",
+       x = "Hour of the Day",
+       y = "Average Value",
+       color = "Metric") +
+  theme_minimal()
+
+```
+Here we see hourly and daily average calorie expenditures and total intensity for Cluster 2: The Casual Navigators or the Low and Slows, our least active group.  
+
+Morning Activity:
+
+Both AvgCalories and AvgTotalIntensity start to rise from the lowest point at the beginning of the graph, which represents 0 hours (midnight), with activity beginning to pick up around 5 AM.
+Midday Peaks:
+
+The peak for AvgCalories seems to occur a bit later in the day compared to Cluster 1, roughly around 1 PM to 3 PM, suggesting that the main period of activity for Cluster 2 might be in the early to mid-afternoon.
+Afternoon Consistency:
+
+Following the peak, there is a gradual decrease in AvgCalories, but the level remains elevated compared to the morning hours, indicating sustained activity throughout the afternoon.
+Evening Activity:
+
+There is a less noticeable decline in the evening for AvgCalories, suggesting that Cluster 2 may have a more extended period of activity that lasts into the evening, although not as intense as the midday peak.
+Intensity Trends:
+
+The AvgTotalIntensity for Cluster 2 is quite flat throughout the day, with only slight fluctuations. This suggests that the intensity of their activities does not vary as much as the calorie expenditure does.
+Late Evening:
+
+Activity for both AvgCalories and AvgTotalIntensity starts to taper off after 8 PM, heading towards the minimal values by midnight.
+Weekend Patterns:
+
+On Saturday, the activity starts to increase a bit earlier, around 6 AM, with a smoother curve throughout the day. The midday peak is less pronounced compared to weekdays.
+Sunday shows a similar trend to Saturday but with even less variation in calorie burn and intensity throughout the day, suggesting a relaxed activity pattern.
+
+Comparative Weekday vs. Weekend:
+
+There are noticeable differences between weekday and weekend activity levels. The weekend days show a more leveled pattern with less distinction between peak and non-peak hours, which might reflect a more relaxed pace or varied activities.
+
+These observations suggest that individuals in Cluster 2 have a distinct pattern of activity with a later peak in calorie burn and a relatively consistent intensity of activity throughout the day. The weekends show a tendency for activities to start earlier and spread more evenly across the day compared to weekdays.
+
+
+**Cluster 3: The Power Movers**
+
+```{r Cluster 3: The Power Movers}
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+
+# Group by Cluster, Hour, and WeekDay, then summarize
+hourly_activity_summary <- hourly_data_clustered %>%
+  group_by(Cluster, Hour, WeekDay) %>%
+  summarise(
+    AvgCalories = mean(Calories, na.rm = TRUE),
+    AvgStepTotal = mean(StepTotal, na.rm = TRUE),
+    AvgTotalIntensity = mean(TotalIntensity, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+# Filter the summarized data for Cluster 1
+cluster_3_activity_summary <- hourly_activity_summary %>%
+  filter(Cluster == 3)
+
+# Reshape the data to long format
+cluster_3_activity_long <- cluster_3_activity_summary %>%
+  pivot_longer(
+    cols = c("AvgCalories", "AvgTotalIntensity"),
+    names_to = "Variable",
+    values_to = "Value"
+  )
+
+# Plot all three variables on the same graph
+ggplot(cluster_3_activity_long, aes(x = Hour, y = Value, color = Variable, group = Variable)) +
+  geom_line() +
+  facet_wrap(~WeekDay) +
+  labs(title = "Average Metrics by Hour for Cluster 3",
+       x = "Hour of the Day",
+       y = "Average Value",
+       color = "Metric") +
+  theme_minimal()
+
+```
+
+Here we have the hourly and daily graphs of AvgCalories and AvgTotalIntensity for Cluster 3: The Power Movers.  Keep in mind, this only represents 4 users out of the 33 in our sample.
+
+During the weekdays, we see a significant spike in activity starting around 5am (with the most significant spikes being on Monday and Tuesday, which might represent some pre-work exercise in the earlier days of the week), with additional peaks around midday (noonish), and usually a spike in the evening as well (roughly 6-7pm), with usually a significant dropoff around 8pm.  Interestingly, Mondays and Tuesdays seem to be dominated by the morning activity, with a lower peak in the evening, whereas Wednesday, Thursday, Friday show less morning activity but significantly more in the evenings after work, with the Wednesday evening workout being especially prolonged.
+
+Saturday shows a much slower and more gradual start in the morning, but a significant activity peak around 1pm, then a trough around 4pm and a lesser peak around 7pm.  Sunday looks like a rest day, with a similar pattern to Saturday except with no activity peak around midday, instead showing the day's peak around 5pm.
+
+This concludes are general observations about our different clusters. I'll recap their traits and associated recommendations at the end.
+
+Now, let's move on the examining our last dataset, Activity Plus Sleep.
+
+### Activity Plus Sleep
+
+Recall that this dataset is a merge of the original daily_activity dataset along with the sleep dataset for the 'Id's that were common between them.  We have a reduced number of users in this sample, with only 24 users instead of our 33.
+
+```{r}
+# Find the number of unique Ids in the 'Id' column using base R
+number_of_unique_ids <- length(unique(activity_plus_sleep$Id))
+
+# Print the result
+print(number_of_unique_ids)
+
+# Look at dataset head
+head(activity_plus_sleep)
+```
+
+Here we still have TrackerDistance, which in a previous dataset we determined was so correlated with TotalDistance that it was redundant  Let's first look at how correlated TotalMinutesAsleep and TotalTimeInBed are to see if they are distinct or if we can elminate one.
+
+
+```{r TotalMinutesAsleep vs TotalTimeInBed}
+#Examine Correlations
+correlation_matrix <- cor(activity_plus_sleep[,c('TotalMinutesAsleep', 'TotalTimeInBed')], use = "complete.obs")
+
+# Display the correlation matrix
+print(correlation_matrix)
+```
+
+Those are so closely correlated that they are functionally tracking the same thing, so let's drop TotalTimeInBed and TrackerDistance.
+
+```{r Dropping TotalTimeInBed and TrackerDistance}
+# Drop the columns from the dataset
+activity_plus_sleep <- activity_plus_sleep %>%
+  select(-TotalTimeInBed, -TrackerDistance)
+```
+
+Now let's look to see what correlations we have between the rest of our variables:
+
+```{r Examining correlations}
+# Load the necessary libraries
+library(corrplot)
+library(dplyr)
+
+# Convert 'WeekDay' to an ordered factor
+activity_plus_sleep$WeekDay <- factor(activity_plus_sleep$WeekDay, 
+                                      levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"),
+                                      ordered = TRUE)
+
+# Convert 'WeekDay' to a numeric scale based on its order
+activity_plus_sleep$WeekDay_numeric <- as.numeric(activity_plus_sleep$WeekDay)
+# Note, interpret correlations with caution as it's an ordinal variable
+
+# Select only numeric columns and exclude 'Id'
+numeric_data <- activity_plus_sleep %>%
+  select_if(~is.numeric(.)) %>%
+  select(-Id)
+
+# Calculate the correlation matrix for numeric columns
+cor_matrix <- cor(numeric_data, use = "pairwise.complete.obs")
+
+# Create the correlation heatmap with annotations
+corrplot(cor_matrix, method = "color", 
+         tl.col = "black", tl.srt = 45, tl.cex = 0.5, # Adjust text color, angle, and size for variable names
+         number.cex = 0.5, # Adjust text size for correlation coefficients
+         diag = FALSE, # Remove the diagonal
+         order = "hclust", # Order variables based on hierarchical clustering
+         mar = c(0,0,1,1) # Increase margins (bottom, left, top, right)
+)
+```
+
+Most of the strongest correlations that we see are what we would expect, with correlations, e.g. between TotalSteps with TotalDistance and ModeratelyActiveDistance with FairlyActiveMinutes.  Interestingly, we see a strong negative correlation between SedentaryMinutes and TotalMinutesAsleep.  Let's reduce the number of variables we are looking at in order to reduce collinearity and get a better picture. 
+
+
+```{r More focused correlations}
+# Load the necessary library
+library(corrplot)
+
+# Select only the variables of interest
+selected_data <- activity_plus_sleep[, c('TotalMinutesAsleep', 'LightlyActiveMinutes', 
+                                         'SedentaryMinutes', 'TotalSteps', 
+                                         'FairlyActiveMinutes', 'Calories', 
+                                         'VeryActiveMinutes')]
+
+# Calculate the correlation matrix for the selected variables
+cor_matrix <- cor(selected_data, use = "pairwise.complete.obs")
+
+# Create the correlation heatmap with annotations for the selected variables
+corrplot(cor_matrix, method = "color", 
+         type = "upper", 
+         tl.col = "black", tl.srt = 45, tl.cex = 0.6, 
+         addCoef.col = "black", 
+         diag = FALSE, 
+         order = "hclust", 
+         mar = c(0,0,2,2))
+
+```
+
+We have a number of moderate to strong correlations between variables here.  The strongest are between Calories and VeryActiveMinutes (which suggests that being more active does lead to more calories burned) and TotalMinutesAsleep and Sedentary minutes, which show a strong negative correlation, suggesting that the more sleep you get the fewer sedentary minutes you have, and vice versa.  Almost as strong are TotalSteps with FairlyActiveMinutes (which is our moderately active status), TotalSteps with VeryActiveMinutes, and TotalSteps with LightlyActiveMinutes.  On the low side of moderate, Calories burned are somewhat correlated with TotalSteps.  Interestingly, Calories burned has almost no correlation with SedentaryMinutes, suggesting that more sedentary time doesn't lead necessarily to fewer calories burned (which might be because sleep, presumably, counts as sedentary time).  
+
+Let's look at some other ways of examining our sleep data; our overall statistics, variations by person, and variations by weekday:
+
+
+```{r Examining Sleep Patterns}
+# 1. Examine Overall Patterns
+summary_stats <- summary(activity_plus_sleep$TotalMinutesAsleep)
+
+# View the quick summary statistics
+print(summary_stats)
+
+# 2. Examine Patterns by Person with additional summary statistics
+patterns_by_person <- activity_plus_sleep %>%
+  group_by(Id) %>%
+  summarise(
+    AverageMinutesAsleep = mean(TotalMinutesAsleep, na.rm = TRUE),
+    SDMinutesAsleep = sd(TotalMinutesAsleep, na.rm = TRUE),
+    MedianMinutesAsleep = median(TotalMinutesAsleep, na.rm = TRUE),
+    MinMinutesAsleep = min(TotalMinutesAsleep, na.rm = TRUE),
+    MaxMinutesAsleep = max(TotalMinutesAsleep, na.rm = TRUE),
+    NA_Count = sum(is.na(TotalMinutesAsleep))
+  )
+print(patterns_by_person)
+
+# Create boxplots for each person's daily sleep minutes
+ggplot(activity_plus_sleep, aes(x = as.factor(Id), y = TotalMinutesAsleep)) +
+  geom_boxplot() +
+  labs(title = "Daily Sleep Minutes by Individual", x = "Individual ID", y = "Total Minutes Asleep") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))  # Rotate x-axis text if necessary
+
+# 3. Examine Variations Over Time by WeekDay with boxplots
+ggplot(activity_plus_sleep, aes(x = WeekDay, y = TotalMinutesAsleep)) +
+  geom_boxplot() +
+  labs(title = "Total Minutes Asleep by WeekDay", x = "Day of the Week", y = "Total Minutes Asleep")
+
+```
+
+**Overall Sleep Statistics**
+Based on these data (which, recall, is based on 24 people gathered over 1 month using a Fitness Tracker), there is a min of 58 minutes (which seems possible, but unlikely, and may be the result of a tracker error or inconsistent use during sleep), and a max of about 800 minutes (which represents over 13 hours asleep in a day, which is also possible but perhaps not likely, and may also be the result of a tracker or user error).  We see a mean and median that are quite close (suggesting not too many outliers) centered around ~420 minutes, or 7 hours of sleep, which seems normal, and we have an IQR almost exactly spreading from 6 hours to 8 hours, which seems very normal and suggests fairly accurate data.
+
+**Variations by Weekday**
+Despite the presence of outliers, we have a pretty good, clear structure of the boxplots, suggesting a pretty good snapshot of the data despite the limitations. One thing to keep in mind when interpreting these data are that hours of sleep here are divided by day, but for most people each night's hours of sleep are divided over two days, which can make it more difficult to tease patterns out. With this in mind, users in our sample clearly get the most rest on Sunday overall, showing a significant increase in sleep on this day compared to the other days of the week. 
+
+*Median Sleep Duration:* The median total minutes asleep, indicated by the line within each box, does not vary greatly across the weekdays. It appears relatively consistent, suggesting that individuals tend to have a stable sleep duration throughout the week.
+
+*Interquartile Range (IQR):* The IQR, represented by the height of each box, is somewhat consistent across all days, with Wednesday showing a slightly tighter IQR, implying less variability in sleep duration on that day among the participants.
+
+*Outliers:* There are several outliers on each day, shown by the individual dots outside the "whiskers" of the boxplots. Some of these outliers indicate significantly less sleep, particularly on Sunday, Monday, and Saturday. Fewer instances of excessive sleep (over the upper whiskers) are seen throughout the week.
+
+*Range of Sleep Durations:* The range, indicated by the whiskers, shows that there is a wide variation in sleep duration among individuals on each day. However, the ranges are similar across the weekdays, with no day showing an extreme difference in sleep variation.
+
+*Weekend vs. Weekdays:* Saturday shows a slightly higher median and more upper outliers compared to other days, which may indicate that people tend to sleep more on Saturdays. Conversely, there are notable lower outliers on Sunday and Monday, which could reflect shorter sleep durations for some individuals at the beginning of the week.
+
+*Consistency:* Despite individual variations, the overall sleep patterns seem relatively consistent across the week, as seen by the similarity in the spread and central tendency (median) of the boxplots.
+
+**Variations by User**
+We have no nulls, but we do have two user IDs (2320127002 and 7007744171) that show a maximum sleep over the time period of just over an hour, which seems unlikely over a month without either User or FitBit error.  A third (4558609924), has sleep patterns that are almost as unlikely and very out of norm with the rest.  I'll drop those three and then examine user variation more fully.
+
+Based on the boxplot image, which displays the distribution of daily sleep minutes for individuals over a one-month period, here are some significant observations:
+
+*Variability Among Individuals:*
+
+There is considerable variability in sleep patterns among individuals. Some have a wide range of sleep minutes (indicated by the height of the box and whiskers), while others have a more consistent sleep duration.
+
+*Potential Outliers:*
+
+There are a number of potential outliers, which are represented by individual points outside the "whiskers" of the boxplots. These points could represent unusually short or long sleep durations compared to the individual's typical pattern, or perhaps just errors with how the FitBit recorded sleep or how the users wore them.
+
+*Median Sleep Duration:*
+
+The line inside the box (median) varies among individuals, indicating that the central tendency of sleep duration is different across the sample. Some individuals tend to sleep more, and others less, based on the median line within each box.
+
+*Interquartile Range (IQR):*
+
+The size of the boxes, which represent the interquartile range (the middle 50% of the data), varies between individuals. A larger box indicates more variability in sleep duration from night to night, whereas a smaller box indicates more consistency.
+
+*Minimum and Maximum Sleep Durations:*
+
+The "whiskers" of the boxplots show the range of typical sleep duration (excluding outliers), and there is a wide range among individuals. Some have a broader range of sleep minutes, indicating inconsistency in sleep duration.
+
+*Overall Sleep Duration:*
+
+Most individuals have a median sleep duration that seems to be around 300 to 400 minutes (5 to 6.7 hours), which is below the often-recommended 7-9 hours for adults. If these values are accurate and not due to data recording issues, it may suggest that a significant portion of the sample is not getting sufficient sleep.
+
+*Sleep Hygiene:*
+
+Some individuals show a very tight IQR with a consistent median, which could be indicative of good sleep hygiene and regular sleep habits. Conversely, individuals with a wide IQR might have irregular sleep patterns, which could be a point of concern or investigation.
+
+Let's filter out the outlier users and look at a linear regression examining a few variables and how sleep influences them.
+
+
+```{r Linear Model}
+# Filter out the outlier user IDs
+filtered_data <- activity_plus_sleep %>%
+  filter(!(Id %in% c(2320127002, 7007744171, 4558609924)))
+
+# Load the dplyr package
+library(dplyr)
+
+# Assuming you have already filtered out the unwanted user IDs
+
+# Model TotalSteps as a function of TotalMinutesAsleep
+steps_model <- lm(TotalSteps ~ TotalMinutesAsleep, data = filtered_data)
+summary(steps_model)
+
+# Model Calories as a function of TotalMinutesAsleep
+calories_model <- lm(Calories ~ TotalMinutesAsleep, data = filtered_data)
+summary(calories_model)
+
+# Model SedentaryMinutes as a function of TotalMinutesAsleep
+sedentary_model <- lm(SedentaryMinutes ~ TotalMinutesAsleep, data = filtered_data)
+summary(sedentary_model)
+
+# Model VeryActiveMinutes as a function of TotalMinutesAsleep
+very_active_model <- lm(VeryActiveMinutes ~ TotalMinutesAsleep, data = filtered_data)
+summary(very_active_model)
+
+```
+
+**Findings**
+
+The results from the four linear regression models suggest the following overall findings and conclusions:
+
+*TotalSteps and Sleep:*
+
+There is a significant negative relationship between 'TotalMinutesAsleep' and 'TotalSteps'. This means that, on average, for each additional minute asleep, the number of steps taken decreases. The relationship is statistically significant but has a relatively small effect size (Multiple R-squared of 0.05279), indicating that sleep minutes explain about 5% of the variability in the total steps taken.
+
+*Calories and Sleep:*
+
+The relationship between 'TotalMinutesAsleep' and 'Calories' is not statistically significant. This suggests that, within this dataset, the amount of sleep does not have a clear association with the number of calories burned.
+
+*SedentaryMinutes and Sleep:*
+
+A significant negative relationship exists between 'TotalMinutesAsleep' and 'SedentaryMinutes'. This indicates that more time spent sleeping is associated with fewer sedentary minutes, with a somewhat larger effect size (Multiple R-squared of 0.3049). Sleep minutes explain approximately 30% of the variability in sedentary minutes, which is a substantial proportion.
+
+*VeryActiveMinutes and Sleep:*
+
+There is a significant negative relationship between 'TotalMinutesAsleep' and 'VeryActiveMinutes', but the effect size is quite small (Multiple R-squared of 0.01371). This indicates that more sleep is associated with fewer very active minutes, but the effect is not strong.
+
+In summary, sleep duration appears to have the strongest relationship with sedentary behavior, with more sleep predicting less sedentary time. There is also a significant but smaller association with the number of steps taken, where more sleep predicts fewer steps. There's no significant relationship with calories burned, and a very small effect on very active minutes. These results suggest that individuals who sleep more tend to be less active overall, both in terms of total steps and sedentary minutes. However, the variability explained by sleep duration is relatively small for steps and very active minutes, which means other factors also play a significant role in determining these activities.
+
+This is in keeping with our previous analysis of correlations.
+
+
+## Conclusions and Recommendations
+
+**Overall Trends:**
+
+Activity levels peak during early mornings and evenings, reflecting a preference for users to engage in physical activities before and after traditional work hours. Notably, there's a "lunchtime bump" indicating midday activity, particularly on weekdays, suggesting some users capitalize on breaks for light exercise or movement.
+
+**Three Distinct Groups:**
+
+The analysis identified three user clusters with distinct activity patterns:
+
+* *The Power Movers:* Highly active, engaging in significant steps and intense activities, showing peaks in early morning and late evening.
+
+* *The Casual Navigators:* Show more sedentary behavior with less intense activity spikes, indicating a more relaxed or constrained lifestyle.
+
+* *The Consistent Pacers:* Exhibit moderate activity levels with steadier, more distributed activity throughout the day.
+
+**Trends in Sleep Patterns:**
+
+Sleep analysis reveals a strong negative correlation between 'TotalMinutesAsleep' and 'SedentaryMinutes', suggesting more sleep might lead to less sedentary behavior. The data also highlight that Sunday sees the most sleep, indicating a trend towards using weekends for recovery.
+
+**Activity Intensity and Caloric Burn:**
+
+While initial findings suggested a weak correlation between activity intensity and calories burned, further analysis showed a notable difference, especially with 'VeryActiveMinutes', underscoring the impact of intense physical activity on energy expenditure.
+
+**Business Insights:**
+
+*Trends in Smart Device Usage:*
+
+Smart device usage peaks around specific times (early morning, lunchtime, and evening) and varies across user types and weekdays versus weekends. This indicates users' desire for flexibility and adaptability in activity tracking that fits their lifestyle.
+
+*Application to Bellabeat Customers:*
+
+Bellabeat can tailor its products and services to accommodate the different user clusters by offering personalized activity and sleep insights. For example, providing motivational prompts for 'Casual Navigators' to reduce sedentary time or offering recovery tips for 'Power Movers' after intense activity sessions.
+
+*Influence on Bellabeat Marketing Strategy:*
+
+Highlighting the flexibility of Bellabeat products to track various activities and intensities throughout the day can appeal to a broad user base. Marketing campaigns could focus on the importance of balanced activity and recovery, showcasing how Bellabeat supports users in achieving their health and wellness goals. For 'Consistent Pacers', emphasizing the benefits of maintaining regular, moderate-intensity activities could be key. Additionally, insights into optimal activity times and the benefits of reducing sedentary behavior can inform content creation, product development, and targeted marketing strategies, encouraging a more active lifestyle among Bellabeat customers.
+
+Incorporating these findings into Bellabeat’s marketing and product strategy could significantly enhance user engagement and product appeal by aligning with customers' lifestyles and preferences.

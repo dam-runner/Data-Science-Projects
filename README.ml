@@ -28,9 +28,9 @@ I'm David McArtor, a multidisciplinary professional dedicated to applying a wide
 
 ## Get in Touch
 
-- **LinkedIn**: [Your LinkedIn Profile](Your-LinkedIn-URL)
-- **Email**: [your.email@example.com](mailto:your.email@example.com)
-- **GitHub**: [Your GitHub Profile](https://github.com/yourusername)
+- **LinkedIn**: [David McArtor](www.linkedin.com/in/david-mcartor-496724106)
+- **Email**: [damrunner@gmail.com](mailto:damrunner@gmail.com)
+- **GitHub**: [dam-runner](https://github.com/dam-runner)
 
 ---
 
