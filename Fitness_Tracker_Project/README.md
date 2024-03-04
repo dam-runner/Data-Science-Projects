@@ -45,4 +45,4 @@ Throughout this process, I prioritized reproducibility and transparency, documen
 1. Clone this repository to your local machine.
 2. Open `fitness_tracker_project.Rmd` in RStudio.
 3. Install the required R packages using `install.packages()`.
-4. Knit the document to produce the HTML output, which includes all analysis steps and findings &#8203;``【oaicite:0】``&#8203;
+4. Knit the document to produce the HTML output, which includes all analysis steps and findings.
